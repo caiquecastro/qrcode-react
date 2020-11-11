@@ -25,6 +25,7 @@ export default function Home() {
         className={styles.input}
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        maxLength={20}
       />
     </div>
   )
