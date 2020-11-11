@@ -1,10 +1,14 @@
 import Head from 'next/head'
 import { useState } from 'react'
 import { QRCode } from 'react-qr-svg'
+import { useRouter } from 'next/router'
 import styles from '../styles/Home.module.css'
 
 export default function Home() {
-  const [value, setValue] = useState('');
+  const router = useRouter()
+  const [value, setValue] = useState('')
+
+  const qrcodeValue = router.query.prefix ? `${router.query.prefix}${value}` : value
 
   return (
     <div className={styles.container}>
@@ -18,7 +22,7 @@ export default function Home() {
         fgColor="#000000"
         level="Q"
         style={{ width: 256 }}
-        value={value}
+        value={qrcodeValue}
       />
 
       <input
@@ -27,6 +31,9 @@ export default function Home() {
         onChange={(e) => setValue(e.target.value)}
         maxLength={20}
       />
+      <pre className={styles.valuePreview}>
+        <code>{qrcodeValue}</code>
+      </pre>
     </div>
   )
 }

@@ -128,3 +128,10 @@
   outline: none;
   border: 2px solid #0070f3;
 }
+
+.valuePreview {
+  background-color: #eaeaea;
+  padding: 1rem;
+  max-width: 20rem;
+  width: 100%;
+}
