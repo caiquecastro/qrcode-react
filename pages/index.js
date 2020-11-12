@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { QRCode } from 'react-qr-svg'
 import { useRouter } from 'next/router'
 import styles from '../styles/Home.module.css'
@@ -7,6 +7,10 @@ import styles from '../styles/Home.module.css'
 export default function Home() {
   const router = useRouter()
   const [value, setValue] = useState('')
+
+  useEffect(() => {
+    setValue(router.query.text || '')
+  }, [router])
 
   const qrcodeValue = router.query.prefix ? `${router.query.prefix}${value}` : value
 
