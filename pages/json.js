@@ -1,7 +1,9 @@
 import Head from 'next/head'
-import { useCallback, useState } from 'react';
 import { QRCode } from 'react-qr-svg'
+import { useCallback, useState } from 'react'
 import styles from '../styles/Home.module.css'
+import JsonTable from '../components/JsonTable'
+import { Button, Container, Input } from '@chakra-ui/react'
 
 export default function JsonQrcode() {
     const [values, setValues] = useState([]);
@@ -27,10 +29,10 @@ export default function JsonQrcode() {
         };
     }, {});
     
-    const qrcodeString = JSON.stringify(qrcodeValue);
+    const qrcodeString = JSON.stringify(qrcodeValue, null, 2);
 
     return (
-        <div className={styles.container}>
+        <Container maxW="lg" marginY={10} centerContent>
             <Head>
                 <title>QRCode Generator</title>
                 <link rel="icon" href="/favicon.ico" />
@@ -46,15 +48,17 @@ export default function JsonQrcode() {
 
             <form>
                 <div>
-                    <input value={key} onChange={(e) => setKey(e.target.value)} />
-                    <input value={value} onChange={(e) => setValue(e.target.value)} />
+                    <Input value={key} onChange={(e) => setKey(e.target.value)} />
+                    <Input value={value} onChange={(e) => setValue(e.target.value)} />
                 </div>
-                <button onClick={saveKey}>Salvar</button>
+                <Button onClick={saveKey} type="submit">Salvar</Button>
             </form>
 
-            <pre className={styles.valuePreview}>
+            <JsonTable values={values} onChange={setValues} />
+
+            <div className={styles.valuePreview}>
                 <code>{qrcodeString}</code>
-            </pre>
-        </div>
+            </div>
+        </Container>
     );
 }

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { QRCode } from 'react-qr-svg'
 import { useRouter } from 'next/router'
 import styles from '../styles/Home.module.css'
+import { Container, Input } from '@chakra-ui/react'
 
 export default function Home() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export default function Home() {
   const qrcodeValue = router.query.prefix ? `${router.query.prefix}${value}` : value
 
   return (
-    <div className={styles.container}>
+    <Container maxW="lg" marginY={10} centerContent>
       <Head>
         <title>QRCode Generator</title>
         <link rel="icon" href="/favicon.ico" />
@@ -29,8 +30,8 @@ export default function Home() {
         value={qrcodeValue}
       />
 
-      <input
-        className={styles.input}
+      <Input
+        marginY={2}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         maxLength={20}
@@ -38,6 +39,6 @@ export default function Home() {
       <pre className={styles.valuePreview}>
         <code>{qrcodeValue}</code>
       </pre>
-    </div>
+    </Container>
   )
 }
