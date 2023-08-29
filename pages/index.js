@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
-import { QRCode } from 'react-qr-svg'
+import { QRCodeSVG as QRCode } from 'qrcode.react'
 import { useRouter } from 'next/router'
 import styles from '../styles/Home.module.css'
 import { Container, Input } from '@chakra-ui/react'
@@ -23,18 +23,16 @@ export default function Home() {
       </Head>
 
       <QRCode
-        bgColor="#FFFFFF"
-        fgColor="#000000"
         level="Q"
-        style={{ width: 256 }}
+        size={300}
         value={qrcodeValue}
+        includeMargin
       />
 
       <Input
         marginY={2}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        maxLength={20}
       />
       <pre className={styles.valuePreview}>
         <code>{qrcodeValue}</code>
