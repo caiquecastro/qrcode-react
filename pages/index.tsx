@@ -14,7 +14,27 @@ import {
   Textarea,
 } from '@chakra-ui/react'
 
-const TYPES = [
+type QRType = 'text' | 'url' | 'wifi' | 'email' | 'phone' | 'sms' | 'vcard'
+
+interface TextFields { text: string }
+interface UrlFields { url: string }
+interface WifiFields { ssid: string; password: string; security: 'WPA' | 'WEP' | 'nopass'; hidden: 'true' | 'false' }
+interface EmailFields { to: string; subject: string; body: string }
+interface PhoneFields { phone: string }
+interface SmsFields { phone: string; message: string }
+interface VCardFields { firstName: string; lastName: string; phone: string; email: string; org: string }
+
+type FieldsByType = {
+  text: TextFields
+  url: UrlFields
+  wifi: WifiFields
+  email: EmailFields
+  phone: PhoneFields
+  sms: SmsFields
+  vcard: VCardFields
+}
+
+const TYPES: { id: QRType; label: string }[] = [
   { id: 'text', label: 'Text' },
   { id: 'url', label: 'URL' },
   { id: 'wifi', label: 'WiFi' },
@@ -24,7 +44,7 @@ const TYPES = [
   { id: 'vcard', label: 'Contact' },
 ]
 
-const DEFAULT_FIELDS = {
+const DEFAULT_FIELDS: FieldsByType = {
   text: { text: '' },
   url: { url: '' },
   wifi: { ssid: '', password: '', security: 'WPA', hidden: 'false' },
@@ -34,50 +54,68 @@ const DEFAULT_FIELDS = {
   vcard: { firstName: '', lastName: '', phone: '', email: '', org: '' },
 }
 
-function buildValue(type, fields) {
+function buildValue(type: QRType, fields: FieldsByType[QRType]): string {
   switch (type) {
     case 'text':
-      return fields.text || ''
+      return (fields as TextFields).text
     case 'url':
-      return fields.url || ''
+      return (fields as UrlFields).url
     case 'wifi': {
-      const hidden = fields.hidden === 'true' ? 'H:true;' : ''
-      return `WIFI:T:${fields.security || 'WPA'};S:${fields.ssid || ''};P:${fields.password || ''};${hidden};`
+      const f = fields as WifiFields
+      const hidden = f.hidden === 'true' ? 'H:true;' : ''
+      return `WIFI:T:${f.security};S:${f.ssid};P:${f.password};${hidden};`
     }
-    case 'email':
-      return `MATMSG:TO:${fields.to || ''};SUB:${fields.subject || ''};BODY:${fields.body || ''};;`
+    case 'email': {
+      const f = fields as EmailFields
+      return `MATMSG:TO:${f.to};SUB:${f.subject};BODY:${f.body};;`
+    }
     case 'phone':
-      return `tel:${fields.phone || ''}`
-    case 'sms':
-      return `SMSTO:${fields.phone || ''}:${fields.message || ''}`
-    case 'vcard':
+      return `tel:${(fields as PhoneFields).phone}`
+    case 'sms': {
+      const f = fields as SmsFields
+      return `SMSTO:${f.phone}:${f.message}`
+    }
+    case 'vcard': {
+      const f = fields as VCardFields
       return [
         'BEGIN:VCARD',
         'VERSION:3.0',
-        `N:${fields.lastName || ''};${fields.firstName || ''}`,
-        `FN:${fields.firstName || ''} ${fields.lastName || ''}`.trim(),
-        fields.phone ? `TEL:${fields.phone}` : '',
-        fields.email ? `EMAIL:${fields.email}` : '',
-        fields.org ? `ORG:${fields.org}` : '',
+        `N:${f.lastName};${f.firstName}`,
+        `FN:${f.firstName} ${f.lastName}`.trim(),
+        f.phone ? `TEL:${f.phone}` : '',
+        f.email ? `EMAIL:${f.email}` : '',
+        f.org ? `ORG:${f.org}` : '',
         'END:VCARD',
       ]
         .filter(Boolean)
         .join('\n')
-    default:
-      return ''
+    }
   }
 }
 
-function TextField({ label, fieldKey, fields, onChange }) {
+interface TextFieldProps {
+  label: string
+  fieldKey: string
+  fields: Record<string, string>
+  onChange: (key: string, value: string) => void
+}
+
+function TextField({ label, fieldKey, fields, onChange }: TextFieldProps) {
   return (
     <FormControl>
       <FormLabel>{label}</FormLabel>
-      <Input value={fields[fieldKey] || ''} onChange={(e) => onChange(fieldKey, e.target.value)} />
+      <Input value={fields[fieldKey] ?? ''} onChange={(e) => onChange(fieldKey, e.target.value)} />
     </FormControl>
   )
 }
 
-function TypeForm({ type, fields, onChange }) {
+interface TypeFormProps {
+  type: QRType
+  fields: Record<string, string>
+  onChange: (key: string, value: string) => void
+}
+
+function TypeForm({ type, fields, onChange }: TypeFormProps) {
   switch (type) {
     case 'text':
       return <TextField label="Text" fieldKey="text" fields={fields} onChange={onChange} />
@@ -113,7 +151,7 @@ function TypeForm({ type, fields, onChange }) {
           <FormControl>
             <FormLabel>Body</FormLabel>
             <Textarea
-              value={fields.body || ''}
+              value={fields.body ?? ''}
               onChange={(e) => onChange('body', e.target.value)}
               rows={3}
             />
@@ -129,7 +167,7 @@ function TypeForm({ type, fields, onChange }) {
           <FormControl>
             <FormLabel>Message</FormLabel>
             <Textarea
-              value={fields.message || ''}
+              value={fields.message ?? ''}
               onChange={(e) => onChange('message', e.target.value)}
               rows={3}
             />
@@ -146,27 +184,21 @@ function TypeForm({ type, fields, onChange }) {
           <TextField label="Organization" fieldKey="org" fields={fields} onChange={onChange} />
         </>
       )
-    default:
-      return null
   }
 }
 
 export default function Home() {
-  const [activeType, setActiveType] = useState('text')
-  const [fieldsByType, setFieldsByType] = useState(DEFAULT_FIELDS)
+  const [activeType, setActiveType] = useState<QRType>('text')
+  const [fieldsByType, setFieldsByType] = useState<FieldsByType>(DEFAULT_FIELDS)
 
   const fields = fieldsByType[activeType]
   const qrcodeValue = buildValue(activeType, fields)
 
-  function handleFieldChange(key, val) {
+  function handleFieldChange(key: string, val: string) {
     setFieldsByType((prev) => ({
       ...prev,
       [activeType]: { ...prev[activeType], [key]: val },
     }))
-  }
-
-  function handleTypeChange(type) {
-    setActiveType(type)
   }
 
   return (
@@ -190,7 +222,7 @@ export default function Home() {
         {TYPES.map(({ id, label }) => (
           <Button
             key={id}
-            onClick={() => handleTypeChange(id)}
+            onClick={() => setActiveType(id)}
             colorScheme={activeType === id ? 'blue' : 'gray'}
             variant={activeType === id ? 'solid' : 'outline'}
           >
@@ -200,7 +232,11 @@ export default function Home() {
       </ButtonGroup>
 
       <VStack spacing={3} width="100%">
-        <TypeForm type={activeType} fields={fields} onChange={handleFieldChange} />
+        <TypeForm
+          type={activeType}
+          fields={fields as unknown as Record<string, string>}
+          onChange={handleFieldChange}
+        />
       </VStack>
 
       <pre className={styles.valuePreview}>
